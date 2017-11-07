@@ -1,62 +1,44 @@
-pipeline { 
-  
-  agent {
-        docker {
-            image 'node:6-alpine' 
-            args '-p 3000:3000' 
+node {
+    def app
+    stage('Initialize') {
+        echo 'Initializing...'
+        def node = tool name: 'Node-7.4.0', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+        env.PATH = "${node}/bin:${env.PATH}"
+        sh 'node --version'
+                sh 'npm -v'
+                sh 'docker -v'
+    }
+
+    stage('Clone repository') {
+        /* Let's make sure we have the repository cloned to our workspace */
+
+        checkout scm
+    }
+
+    stage('Build image') {
+        /* This builds the actual image; synonymous to
+         * docker build on the command line */
+
+        app = docker.build("getintodevops/hellonode")
+    }
+
+    stage('Test image') {
+        /* Ideally, we would run a test framework against our image.
+         * For this example, we're using a Volkswagen-type approach ;-) */
+
+        app.inside {
+            sh 'echo "Tests passed"'
         }
     }
- 
-  stages {
-    stage ('Checkout Code') {
-      steps {
-        checkout scm
-      }
+
+    stage('Push image') {
+        /* Finally, we'll push the image with two tags:
+         * First, the incremental build number from Jenkins
+         * Second, the 'latest' tag.
+         * Pushing multiple tags is cheap, as all the layers are reused. */
+        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+            app.push("${env.BUILD_NUMBER}")
+            app.push("latest")
+        }
     }
-    stage ('Verify Tools'){
-      steps {
-        parallel (
-          node: { sh "npm -v" },
-          docker: { sh "docker -v" }
-        )
-      }
-    }
-    stage ('Build app') {
-      steps {
-        sh "npm prune"
-        sh "npm install"
-      }
-    }
-    stage ('Test'){
-      steps {
-        sh "npm test"
-      }
-    }
- 
-    stage ('Build container') {
-      steps {
-        sh "docker build -t badamsbb/node-example:latest ."
-        sh "docker tag badamsbb/node-example:latest badamsbb/node-example:v${env.BUILD_ID}"
-      }
-    }
-    stage ('Deploy') {
-      steps {
-        input "Ready to deploy?"
-        sh "docker stack rm node-example"
-        sh "docker stack deploy node-example --compose-file docker-compose.yml"
-        sh "docker service update node-example_server --image badamsbb/node-example:v${env.BUILD_ID}"
-      }
-    }
-    stage ('Verify') {
-      steps {
-        input "Everything good?"
-      }
-    }
-    stage ('Clean') {
-      steps {
-        sh "npm prune"
-        sh "rm -rf node_modules"
-      }
-    }
-  }
 }

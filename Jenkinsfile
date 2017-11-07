@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label "nodejs-slave"
-    }
+    agent none
     stages {
         stage('Unit Tests'){
             steps {

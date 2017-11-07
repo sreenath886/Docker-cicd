@@ -6,7 +6,7 @@ node {
 
         checkout scm
     }
-     steps('Version Check') {
+     stage('Version Check') {
                 sh 'node --version'
                 sh 'npm -v'
                 sh 'docker -v'

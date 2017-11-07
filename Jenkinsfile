@@ -1,5 +1,3 @@
-
-#!/usr/bin/env groovy
 pipeline { 
   
   agent { 
@@ -62,6 +60,4 @@ pipeline {
       }
     }
   }
-}
-
 }

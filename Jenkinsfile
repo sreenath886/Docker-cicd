@@ -1,30 +1,30 @@
 pipeline {
     agent {
-        docker {
-            image 'node:6-alpine'
-            args '-p 3000:3000'
-        }
-    }
-    environment { 
-        CI = 'true'
+        label "nodejs-slave"
     }
     stages {
-        stage('Build') {
+        stage('Unit Tests'){
             steps {
-                sh 'npm install'
+							  sh 'echo running server tests ...'
+                               // sh 'cd server && npm test'
+								// sh 'echo running react component tests ...'
+								// sh 'cd .. && cd client && npm test'
+								// sh 'running linting ...'
+								// sh 'npm run lint'
             }
         }
-        stage('Test') {
+        stage('Build React code ') {
             steps {
-                sh './jenkins/scripts/test.sh'
+							  sh 'building React code ...'
+              //  sh 'npm run build'
             }
         }
-        stage('Deliver') { 
+        stage('Build Docker Image'){
             steps {
-                sh './jenkins/scripts/deliver.sh' 
-                input message: 'Finished using the web site? (Click "Proceed" to continue)' 
-                sh './jenkins/scripts/kill.sh' 
+								sh 'cd ..'
+								sh 'docker build -t aurora-cx:0.0.${BUILD_NUMBER}'
             }
         }
     }
+
 }

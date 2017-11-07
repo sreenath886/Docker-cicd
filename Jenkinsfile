@@ -1,35 +1,36 @@
+node {
+    def app
 
-podTemplate(label: 'aurora', containers: [
-    containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
-    containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl:v1.7.3', command: 'cat', ttyEnabled: true)
-  ],
-  volumes: [
-    hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
-  ]) {
-
-    node('aurora') {
+    stage('Clone repository') {
+        /* Let's make sure we have the repository cloned to our workspace */
 
         checkout scm
+    }
 
-        stage('build and push the bot image') {
-            container('docker') {
+    stage('Build image') {
+        /* This builds the actual image; synonymous to
+         * docker build on the command line */
 
-                 {
-                    
-                 sh 'docker -v'
-                }
-            }
+        app = docker.build("Docker-cicd/hellonode")
+    }
+
+    stage('Test image') {
+        /* Ideally, we would run a test framework against our image.
+         * For this example, we're using a Volkswagen-type approach ;-) */
+
+        app.inside {
+            sh 'echo "Tests passed"'
         }
+    }
 
-        stage('update kubernetes') {
-           steps {
-							echo 'running linting ...'
-							// sh 'npm run lint'
-                            echo 'placeholder for UT'
-							// sh 'npm test'
-            }
+    stage('Push image') {
+        /* Finally, we'll push the image with two tags:
+         * First, the incremental build number from Jenkins
+         * Second, the 'latest' tag.
+         * Pushing multiple tags is cheap, as all the layers are reused. */
+        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+            app.push("${env.BUILD_NUMBER}")
+            app.push("latest")
         }
     }
 }
-
-

@@ -20,7 +20,7 @@ pipeline {
         stage('Build Docker Image'){
             steps {
 								sh 'cd ..'
-								sh 'docker build -t DockerCiCd:0.0.1'
+								sh 'docker build -t Docker-cicd:0.0.1'
             }
         }
     }

@@ -11,7 +11,7 @@ node {
         /* This builds the actual image; synonymous to
          * docker build on the command line */
 
-        app = docker.build("Docker-cicd/hellonode")
+        app = docker.build("docker/cicdv1")
     }
 
     stage('Test image') {

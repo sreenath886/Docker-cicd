@@ -1,14 +1,17 @@
+podTemplate(label: 'docker',
+  containers: [containerTemplate(name: 'docker', image: 'docker:1.11', ttyEnabled: true, command: 'cat')],
+  volumes: [hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')]
+  ) {
 
-pipeline {
-    def app
-   agent {
-        docker {
-            image 'node:6-alpine' 
-            args '-p 3000:3000' 
-        }
+  def image = "jenkins/jnlp-slave"
+  node('docker') {
+
+       stage('Clone repository') {
+        /* Let's make sure we have the repository cloned to our workspace */
+
+        checkout scm
     }
-    stages {
-        stage('Unit Tests'){
+    stage('Unit Tests'){
             steps {
 							echo 'running linting ...'
 							// sh 'npm run lint'
@@ -16,13 +19,11 @@ pipeline {
 							// sh 'npm test'
             }
         }
-        stage('Build image') {
-        /* This builds the actual image; synonymous to
-         * docker build on the command line */
-
-        app = docker.build("getintodevops/hellonodssse")
+    stage('Build Docker image') {
+      git 'https://github.com/jenkinsci/docker-jnlp-slave.git'
+      container('docker') {
+        sh "docker build -t ${image} ."
+      }
     }
-        
-    }     
-
+  }
 }
